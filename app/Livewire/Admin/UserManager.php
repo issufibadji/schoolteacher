@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Notifications\UserAccountCreated;
 use App\Policies\UserPolicy;
+use App\Services\ImpersonationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -148,6 +149,13 @@ class UserManager extends Component
         $user->forceFill(['requires_2fa' => ! $user->requires_2fa])->save();
     }
 
+    public function acessarComo(int $id, ImpersonationService $impersonation): void
+    {
+        $impersonation->iniciar(Auth::user(), User::findOrFail($id));
+
+        $this->redirectRoute('dashboard', navigate: false);
+    }
+
     public function delete(int $id): void
     {
         $user = User::findOrFail($id);
@@ -186,6 +194,7 @@ class UserManager extends Component
         return view('livewire.admin.user-manager', [
             'users' => $users,
             'allRoles' => $allRoles,
+            'impersonation' => app(ImpersonationService::class),
         ]);
     }
 }

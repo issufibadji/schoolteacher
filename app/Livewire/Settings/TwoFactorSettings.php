@@ -6,6 +6,7 @@ use App\Actions\Auth\ConfirmTwoFactorAction;
 use App\Actions\Auth\DisableTwoFactorAction;
 use App\Actions\Auth\EnableTwoFactorAction;
 use App\Actions\Auth\RegenerateRecoveryCodesAction;
+use App\Services\ImpersonationService;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -23,6 +24,15 @@ class TwoFactorSettings extends Component
     public string $code = '';
 
     public bool $showRecoveryCodes = false;
+
+    /**
+     * Admin no "Acessar como" não mexe no 2FA nem vê QR/códigos de recuperação
+     * do usuário assumido. boot() roda em toda request (abrir a tela e cada ação).
+     */
+    public function boot(ImpersonationService $impersonation): void
+    {
+        abort_if($impersonation->ativo(), 403, 'Indisponível ao acessar como outro usuário.');
+    }
 
     public function enable(EnableTwoFactorAction $action): void
     {

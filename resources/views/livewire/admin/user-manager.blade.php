@@ -66,6 +66,15 @@
                     </x-badge>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap space-x-3">
+                    @if ($impersonation->podeAcessarComo(auth()->user(), $user))
+                        <button
+                            wire:click="acessarComo({{ $user->id }})"
+                            wire:confirm="Acessar o sistema como {{ $user->name }}? Tudo que você fizer será em nome dessa conta (e registrado na auditoria)."
+                            class="text-accent hover:underline text-sm"
+                        >
+                            Acessar como
+                        </button>
+                    @endif
                     @can('update', $user)
                         <button wire:click="edit({{ $user->id }})" class="text-primary hover:underline text-sm">Editar</button>
                         <button wire:click="toggleActive({{ $user->id }})" class="text-text-secondary hover:underline text-sm">

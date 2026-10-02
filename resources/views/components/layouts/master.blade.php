@@ -26,6 +26,19 @@
         <livewire:sidebar />
 
         <main class="flex-1 min-w-0 overflow-x-hidden">
+            @if ($impersonador = app(\App\Services\ImpersonationService::class)->impersonador())
+                <div class="sticky top-0 z-40 flex flex-wrap items-center justify-center gap-3 px-6 py-2 bg-warning text-black text-sm font-medium">
+                    <x-heroicon-o-eye class="w-4 h-4" />
+                    <span>Você ({{ $impersonador->name }}) está acessando como <strong>{{ auth()->user()->name }}</strong>.</span>
+                    <form method="POST" action="{{ route('impersonate.stop') }}">
+                        @csrf
+                        <button type="submit" class="px-3 py-1 rounded-full bg-black/80 text-white text-xs font-semibold hover:bg-black transition">
+                            Voltar para minha conta
+                        </button>
+                    </form>
+                </div>
+            @endif
+
             <div
                 class="sticky top-0 z-30 flex justify-end items-center gap-2 px-6 py-3 border-b border-surface-border bg-surface-card/40 backdrop-blur"
                 x-data="{ light: document.documentElement.classList.contains('light') }"

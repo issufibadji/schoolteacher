@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\StopImpersonationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
@@ -18,6 +19,10 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
+
+    // Sai do "Acessar como" — quem chama é o usuário assumido, então só exige auth;
+    // o service recusa (403) se não houver um admin por trás da sessão.
+    Route::post('impersonate/stop', StopImpersonationController::class)->name('impersonate.stop');
 
     Route::get('two-factor-challenge', TwoFactorChallenge::class)->name('two-factor.challenge');
 
