@@ -19,6 +19,11 @@ class DatabaseSeeder extends Seeder
         $this->call(MenuSideBarSeeder::class);
         $this->call(TestUsersSeeder::class);
 
+        // Factories depend on Faker (dev-only dependency); skip outside local.
+        if (! app()->environment('local')) {
+            return;
+        }
+
         User::factory(10)->create();
 
         $testUser = User::factory()->create([
