@@ -22,7 +22,7 @@ class Ajuda extends Component
             $data['banner'] = AjudaModel::where('role', 'aluno')->first()?->conteudo;
             $data['faqs'] = AjudaFaq::ativo()->paraRole('aluno')->get();
         } else {
-            $role = $user->getRoleNames()->first();
+            $role = $user->perfilExibido();
             $data['conteudo'] = $role ? AjudaModel::where('role', $role)->first()?->conteudo : null;
         }
 

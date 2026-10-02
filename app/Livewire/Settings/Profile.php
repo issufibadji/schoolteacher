@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -305,7 +306,7 @@ class Profile extends Component
             'addresses' => $user->addresses()->orderByDesc('is_primary')->get(),
             'additionalData' => $user->additionalData()->orderBy('key')->get(),
             'avatarUrl' => $user->avatar_path ? Storage::disk('public')->url($user->avatar_path) : null,
-            'roleName' => $user->getRoleNames()->first() ?? 'Sem função',
+            'roleName' => User::rotuloPerfil($user->perfilExibido()),
         ]);
     }
 }

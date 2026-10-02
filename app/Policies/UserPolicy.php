@@ -19,7 +19,7 @@ class UserPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('manager');
+        return $user->atuaComo('manager');
     }
 
     public function update(User $user, User $alvo): bool
@@ -34,7 +34,7 @@ class UserPolicy
 
     private function podeGerenciar(User $user, User $alvo): bool
     {
-        if (! $user->hasRole('manager')) {
+        if (! $user->atuaComo('manager')) {
             return false;
         }
 

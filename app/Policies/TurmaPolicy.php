@@ -13,7 +13,7 @@ class TurmaPolicy
             return true;
         }
 
-        if ($user->hasRole('professor')) {
+        if ($user->atuaComo('professor')) {
             return $turma->professor_id === $user->id;
         }
 

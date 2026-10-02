@@ -17,12 +17,12 @@ class Dashboard extends Component
     {
         $user = Auth::user();
         $isAluno = $user->hasRole('aluno');
-        $isProfessor = ! $isAluno && $user->hasRole('professor');
+        $isProfessor = ! $isAluno && $user->atuaComo('professor');
 
         $data = [
             'recentNotifications' => $user->notifications()->latest()->limit(5)->get(),
             'unreadCount' => $user->unreadNotifications()->count(),
-            'roleName' => $user->getRoleNames()->first() ?? 'Sem função',
+            'roleName' => User::rotuloPerfil($user->perfilExibido()),
             'memberSince' => $user->created_at,
             'isAluno' => $isAluno,
             'isProfessor' => $isProfessor,

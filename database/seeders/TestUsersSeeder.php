@@ -26,6 +26,8 @@ class TestUsersSeeder extends Seeder
         $admin = $this->criarUsuario('Admin Teste', 'admin@teste.com', 'admin');
         $this->criarUsuario('Manager Teste', 'manager@teste.com', 'manager');
         $this->criarUsuario('Operator Teste', 'operator@teste.com', 'operator');
+        // Diretor que também dá aula: alterna entre os dois perfis no topo da tela.
+        $this->criarUsuario('Diretor Professor Teste', 'diretor@teste.com', 'manager')->assignRole('professor');
         $professor = $this->criarUsuario('Professor Teste', 'professor@teste.com', 'professor');
         $aluno = $this->criarUsuario('Aluno Teste', 'aluno@teste.com', 'aluno');
 
