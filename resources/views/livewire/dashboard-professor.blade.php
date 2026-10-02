@@ -20,8 +20,8 @@
 </div>
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="rounded-2xl border border-sky-500/20 bg-sky-500/10 p-5">
-        <x-heroicon-o-rectangle-group class="w-6 h-6 text-sky-500 mb-3" />
+    <div class="rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/10 p-5">
+        <x-heroicon-o-rectangle-group class="w-6 h-6 text-fuchsia-500 mb-3" />
         <p class="text-3xl font-bold text-text-primary">{{ $resumoProfessor['turmas'] }}</p>
         <p class="text-xs text-text-secondary">{{ $resumoProfessor['turmas'] === 1 ? 'Turma' : 'Turmas' }}</p>
     </div>
