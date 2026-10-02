@@ -123,4 +123,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Initial Admin User
+    |--------------------------------------------------------------------------
+    |
+    | Credentials used by AdminUserSeeder to create the first admin account.
+    | The seeder is skipped when email or password is not set.
+    |
+    */
+
+    'admin' => [
+        'name' => env('ADMIN_NAME', 'Administrador'),
+        'email' => env('ADMIN_EMAIL'),
+        'password' => env('ADMIN_PASSWORD'),
+    ],
+
 ];

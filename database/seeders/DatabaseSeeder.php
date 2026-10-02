@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AjudaPermissionSeeder::class);
         $this->call(AjudaSeeder::class);
         $this->call(MenuSideBarSeeder::class);
+        $this->call(AdminUserSeeder::class);
         $this->call(TestUsersSeeder::class);
 
         // Factories depend on Faker (dev-only dependency); skip outside local.
