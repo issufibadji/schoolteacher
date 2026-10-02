@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind Easypanel/Traefik: trust X-Forwarded-* so HTTPS URLs are generated.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'check2fa' => \App\Http\Middleware\CheckTwoFactor::class,
             'checkPermission' => \App\Http\Middleware\CheckPermission::class,
