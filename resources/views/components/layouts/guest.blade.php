@@ -35,12 +35,11 @@
             {{-- Painel decorativo: faixas diagonais em "<" + aba recortada --}}
             <div class="hidden lg:block relative w-5/12 shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent">
                 <div class="absolute inset-0 overflow-hidden">
-                    {{-- faixa de cima (desce da direita pra ponta do "<") --}}
-                    <div class="absolute -left-24 top-[46%] h-28 w-[160%] origin-left -rotate-45 bg-white/15 shadow-2xl"></div>
-                    <div class="absolute -left-24 top-[46%] h-14 w-[160%] origin-left -rotate-45 bg-white/10"></div>
-                    {{-- faixa de baixo (sobe da ponta do "<" pra direita) --}}
-                    <div class="absolute -left-24 top-[54%] h-28 w-[160%] origin-left rotate-45 bg-black/15 shadow-2xl"></div>
-                    <div class="absolute -left-24 top-[54%] h-14 w-[160%] origin-left rotate-45 bg-white/10"></div>
+                    {{-- As duas faixas partem do mesmo ponto na borda esquerda e abrem em "<" --}}
+                    <div class="absolute left-0 bottom-1/2 h-28 w-[160%] origin-bottom-left -rotate-45 bg-white/15 shadow-2xl"></div>
+                    <div class="absolute left-0 bottom-1/2 h-12 w-[160%] origin-bottom-left -rotate-45 bg-white/10"></div>
+                    <div class="absolute left-0 top-1/2 h-28 w-[160%] origin-top-left rotate-45 bg-black/15 shadow-2xl"></div>
+                    <div class="absolute left-0 top-1/2 h-12 w-[160%] origin-top-left rotate-45 bg-white/10"></div>
                     {{-- véu claro à direita, como na referência --}}
                     <div class="absolute inset-y-0 right-0 w-1/2 bg-linear-to-l from-white/25 to-transparent"></div>
                 </div>
