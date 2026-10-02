@@ -4,8 +4,8 @@
     class="shrink-0 bg-surface-card/70 backdrop-blur border-r border-surface-border flex flex-col h-screen sticky top-0 transition-all duration-200"
 >
     <div class="px-5 py-5 flex items-center gap-3" x-bind:class="collapsed && 'justify-center px-0'">
-        <div class="w-9 h-9 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
-            <x-heroicon-s-sparkles class="w-5 h-5 text-white" />
+        <div class="w-9 h-9 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 shrink-0 overflow-hidden">
+            <x-app-logo />
         </div>
         <span x-show="!collapsed" x-cloak class="text-lg font-semibold text-text-primary whitespace-nowrap">{{ config('app.name') }}</span>
     </div>

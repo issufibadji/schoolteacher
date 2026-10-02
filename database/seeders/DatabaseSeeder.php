@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AjudaPermissionSeeder::class);
         $this->call(AjudaSeeder::class);
         $this->call(MenuSideBarSeeder::class);
+        $this->call(AppConfigSeeder::class);
         $this->call(AdminUserSeeder::class);
         $this->call(TestUsersSeeder::class);
 

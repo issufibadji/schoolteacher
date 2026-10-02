@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? config('app.name') }}</title>
+    <x-app-favicon />
 
     <script>
         if (localStorage.getItem('theme') === 'light') {
@@ -33,7 +34,7 @@
         <div class="glow-border w-full max-w-4xl flex bg-surface-card border border-surface-border rounded-3xl overflow-hidden">
 
             {{-- Painel decorativo: faixas diagonais em "<" + aba recortada --}}
-            <div class="hidden lg:block relative w-5/12 shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent">
+            <div class="hidden lg:block relative w-1/2 shrink-0 bg-linear-to-br from-primary-dark via-primary to-accent">
                 <div class="absolute inset-0 overflow-hidden">
                     {{-- As duas faixas partem do mesmo ponto na borda esquerda e abrem em "<" --}}
                     <div class="absolute left-0 bottom-1/2 h-28 w-[160%] origin-bottom-left -rotate-45 bg-white/15 shadow-2xl"></div>
@@ -44,20 +45,28 @@
                     <div class="absolute inset-y-0 right-0 w-1/2 bg-linear-to-l from-white/25 to-transparent"></div>
                 </div>
 
-                <div class="relative h-full flex flex-col justify-between p-8">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shadow-lg">
-                            <x-heroicon-s-sparkles class="w-5 h-5 text-white" />
-                        </div>
-                        <span class="text-lg font-semibold text-white">{{ config('app.name') }}</span>
-                    </div>
-
+                <div class="relative h-full flex flex-col justify-between p-8 pb-6">
                     <div>
-                        <p class="text-white/70 text-xs uppercase tracking-widest">Bem-vindo</p>
-                        <h2 class="text-white text-2xl font-semibold mt-2 leading-tight">
-                            Gestão inteligente,<br>em um só lugar.
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shadow-lg overflow-hidden">
+                                <x-app-logo />
+                            </div>
+                            <span class="text-lg font-semibold text-white">{{ config('app.name') }}</span>
+                        </div>
+
+                        <p class="mt-6 text-white/70 text-xs uppercase tracking-widest">{{ config_app('login_subtitulo') ?: 'Bem-vindo' }}</p>
+                        <h2 class="max-w-75 text-white text-2xl font-semibold mt-1 leading-tight">
+                            {{ config_app('login_titulo') ?: 'Gestão inteligente, em um só lugar.' }}
                         </h2>
                     </div>
+
+                    {{-- Imagem configurável em Configurações (login_imagem); sem ela, a ilustração padrão.
+                         Fica à esquerda pra não ficar sob a aba recortada. --}}
+                    @if ($imagemLogin = config_app_media('login_imagem'))
+                        <img src="{{ $imagemLogin }}" alt="" class="w-full max-w-75 max-h-72 object-contain object-bottom-left drop-shadow-xl">
+                    @else
+                        <x-ilustracao-professor class="w-full max-w-75 drop-shadow-xl" />
+                    @endif
                 </div>
 
                 {{-- Aba recortada: mesma cor do card, "encaixada" no painel com cantos côncavos --}}
@@ -75,8 +84,8 @@
                 <div class="flex-1 px-8 sm:px-12 py-10 flex flex-col justify-center">
                     {{-- Marca no mobile (o painel decorativo some abaixo de lg) --}}
                     <div class="lg:hidden flex items-center gap-3 mb-8">
-                        <div class="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-                            <x-heroicon-s-sparkles class="w-5 h-5 text-white" />
+                        <div class="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 overflow-hidden">
+                            <x-app-logo />
                         </div>
                         <span class="text-lg font-semibold text-text-primary">{{ config('app.name') }}</span>
                     </div>
@@ -88,7 +97,7 @@
 
                 <div class="px-8 sm:px-12 py-4 border-t border-surface-border shadow-[0_-8px_20px_-16px_rgb(0_0_0/0.35)]">
                     <p class="text-xs text-text-secondary">
-                        &copy; {{ date('Y') }} {{ config('app.name') }}. Todos os direitos reservados.
+                        {{ config_app('app_rodape') ?: '© '.date('Y').' '.config('app.name').'. Todos os direitos reservados.' }}
                     </p>
                 </div>
             </div>
