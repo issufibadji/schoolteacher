@@ -1,5 +1,5 @@
 <div>
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 class="text-2xl font-semibold text-text-primary">Configurações da Aplicação</h1>
         <x-button wire:click="create">+ Nova Configuração</x-button>
     </div>

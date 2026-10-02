@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AppConfigSeeder::class);
         $this->call(AdminUserSeeder::class);
         $this->call(TestUsersSeeder::class);
+        $this->call(DadosDemonstracaoSeeder::class);
 
         // Factories depend on Faker (dev-only dependency); skip outside local.
         if (! app()->environment('local')) {

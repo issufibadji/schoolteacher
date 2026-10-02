@@ -47,8 +47,8 @@ class ImpersonationTest extends TestCase
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Você (Admin Chefe) está acessando como')
-            ->assertSee('Prof Carla');
+            ->assertSeeInOrder(['Você (Admin Chefe) está acessando', 'como', 'Prof Carla'])
+            ->assertSee('Voltar para minha conta');
 
         // Como professor, não entra em tela de admin.
         $this->get(route('admin.users.index'))->assertForbidden();
@@ -57,7 +57,7 @@ class ImpersonationTest extends TestCase
 
         $this->assertTrue(auth()->user()->is($admin));
         $this->assertNull(session(ImpersonationService::SESSION_KEY));
-        $this->get(route('admin.users.index'))->assertOk()->assertDontSee('está acessando como');
+        $this->get(route('admin.users.index'))->assertOk()->assertDontSee('Voltar para minha conta');
     }
 
     public function test_access_bypasses_target_two_factor_challenge(): void

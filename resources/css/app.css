@@ -62,6 +62,98 @@ body {
         radial-gradient(ellipse 800px 700px at 50% 110%, oklch(90% 0.05 300 / 35%), transparent 60%);
 }
 
+/* Em tela de toque, campo com fonte < 16px faz o iOS dar zoom ao focar. */
+@media (pointer: coarse) {
+    input:not([type='checkbox'], [type='radio'], [type='file'], [type='range']),
+    select,
+    textarea {
+        font-size: max(1rem, 16px);
+    }
+}
+
+/* Títulos nunca vazam da tela: quebram palavra longa e encolhem em telas bem estreitas. */
+h1 {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 359px) {
+    main h1.text-2xl {
+        font-size: 1.25rem;
+    }
+
+    main h1.text-4xl {
+        font-size: 1.875rem;
+    }
+}
+
+/* Paginação do Livewire com muitas páginas: quebra linha em vez de vazar da tela
+   (só quebra quando não cabe, então o desktop fica igual). */
+nav[aria-label='Pagination Navigation'] > div {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+nav[aria-label='Pagination Navigation'] span.inline-flex {
+    flex-wrap: wrap;
+}
+
+/* <x-table> < 640px: cada linha vira um card empilhado, com o rótulo da coluna
+   (data-label, preenchido pelo Alpine tabelaResponsiva) ao lado do valor. */
+@media (max-width: 639px) {
+    .tabela-responsiva table,
+    .tabela-responsiva tbody,
+    .tabela-responsiva tr,
+    .tabela-responsiva td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Cabeçalho some da tela, mas continua lido por leitor de tela. */
+    .tabela-responsiva thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .tabela-responsiva tr {
+        padding-block: 0.5rem;
+    }
+
+    .tabela-responsiva td {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem 0.75rem;
+        padding-block: 0.375rem;
+        text-align: right;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* A margin dos filhos (space-x-*) quebra o alinhamento quando a linha embrulha. */
+    .tabela-responsiva td > * {
+        margin-inline: 0 !important;
+    }
+
+    .tabela-responsiva td[data-label]::before {
+        content: attr(data-label);
+        margin-right: auto;
+        padding-right: 0.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--color-text-secondary);
+    }
+
+    .tabela-responsiva td[data-label='']::before {
+        content: none;
+    }
+}
+
 .glow-border {
     box-shadow: 0 0 0 1px oklch(70% 0.15 300 / 8%), 0 8px 30px -12px oklch(55% 0.23 297 / 35%);
 }

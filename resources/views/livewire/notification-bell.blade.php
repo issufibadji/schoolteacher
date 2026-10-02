@@ -1,5 +1,5 @@
 <div wire:poll.30s x-data="{ open: false }" class="relative">
-    <button @click="open = !open" type="button" class="relative p-2 rounded-lg hover:bg-surface-border">
+    <button @click="open = !open" type="button" aria-label="Notificações" x-bind:aria-expanded="open.toString()" class="relative p-2 pointer-coarse:min-h-11 pointer-coarse:min-w-11 flex items-center justify-center rounded-lg hover:bg-surface-border">
         <x-heroicon-o-bell class="w-5 h-5 text-text-secondary" />
         @if ($unreadCount > 0)
             <span class="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-danger text-white text-[10px]">
@@ -13,7 +13,7 @@
         x-transition
         @click.outside="open = false"
         x-cloak
-        class="absolute right-0 mt-2 w-80 bg-surface-card border border-surface-border rounded-xl shadow-lg z-40"
+        class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] bg-surface-card border border-surface-border rounded-xl shadow-lg z-40"
     >
         <div class="flex items-center justify-between px-4 py-3 border-b border-surface-border">
             <span class="text-sm font-medium text-text-primary">Notificações</span>
