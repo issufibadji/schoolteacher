@@ -344,7 +344,9 @@ class ModuloConteudoManager extends Component
     {
         return view('livewire.academico.modulo-conteudo-manager', [
             'modulos' => $this->turma->modulos()->with('conteudos')->get(),
-            'secoesExistentes' => $this->turma->modulos()->whereNotNull('secao')->distinct()->orderBy('secao')->pluck('secao'),
+            // reorder(): a relação modulos() já ordena por 'ordem', e o MySQL recusa
+            // SELECT DISTINCT secao ... ORDER BY ordem (coluna fora do DISTINCT).
+            'secoesExistentes' => $this->turma->modulos()->whereNotNull('secao')->reorder()->distinct()->orderBy('secao')->pluck('secao'),
         ]);
     }
 }
