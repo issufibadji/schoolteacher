@@ -1,4 +1,4 @@
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto min-w-0">
     <div class="mb-6">
         <a href="{{ route('academico.minha-turma.modulo', [$turma, $modulo]) }}" class="text-sm text-primary hover:underline">&larr; {{ $modulo->nome }}</a>
         <div class="flex items-center gap-3 mt-2 flex-wrap">
@@ -38,7 +38,8 @@
 
                 @case($conteudo->tipo === 'texto')
                     <x-card>
-                        <p class="text-sm text-text-secondary whitespace-pre-line">{{ $conteudo->corpo ?? 'Nenhum conteúdo cadastrado ainda.' }}</p>
+                        {{-- wrap-anywhere: palavra/link sem espaço (ex.: "kkkk…", URL longa) quebra em vez de vazar do card --}}
+                        <div class="text-base leading-relaxed text-text-primary whitespace-pre-line wrap-anywhere">{{ $conteudo->corpo ?? 'Nenhum conteúdo cadastrado ainda.' }}</div>
                     </x-card>
                     @break
 
@@ -62,12 +63,12 @@
                         <div class="space-y-4">
                             @foreach ($conteudo->perguntas as $pergunta)
                                 <x-card>
-                                    <p class="text-text-primary font-medium mb-3">{{ $pergunta->enunciado }}</p>
+                                    <p class="text-text-primary font-medium mb-3 whitespace-pre-line wrap-anywhere">{{ $pergunta->enunciado }}</p>
                                     <div class="space-y-2">
                                         @foreach ($pergunta->opcoes as $opcao)
-                                            <label class="flex items-center gap-2 text-sm text-text-secondary">
-                                                <input type="checkbox" wire:model="respostasSelecionadas.{{ $pergunta->id }}.{{ $opcao->id }}" class="rounded bg-surface border-surface-border">
-                                                {{ $opcao->texto }}
+                                            <label class="flex items-start gap-2 text-sm text-text-secondary">
+                                                <input type="checkbox" wire:model="respostasSelecionadas.{{ $pergunta->id }}.{{ $opcao->id }}" class="mt-0.5 shrink-0 rounded bg-surface border-surface-border">
+                                                <span class="min-w-0 wrap-anywhere">{{ $opcao->texto }}</span>
                                             </label>
                                         @endforeach
                                     </div>

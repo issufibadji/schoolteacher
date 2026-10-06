@@ -71,6 +71,13 @@ body {
     }
 }
 
+/* Texto digitado por usuário (títulos, descrições, conteúdo de aula) pode ter "palavras"
+   enormes sem espaço (kkkk…, URLs). break-word só quebra quando não cabe e não altera a
+   largura mínima calculada das tabelas, que continuam rolando na horizontal. */
+main {
+    overflow-wrap: break-word;
+}
+
 /* Títulos nunca vazam da tela: quebram palavra longa e encolhem em telas bem estreitas. */
 h1 {
     overflow-wrap: anywhere;
