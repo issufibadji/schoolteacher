@@ -1,6 +1,39 @@
+@php
+    // $previa: professor vendo a aula como o aluno (PreviaConteudo). Sempre liberada,
+    // sem progresso/quiz salvos, com gabarito e regra de liberação à mostra.
+    $previa = $previa ?? false;
+    $rotaAula = $previa ? 'academico.turmas.conteudo.previa' : 'academico.minha-turma.aula';
+@endphp
+
 <div class="max-w-4xl mx-auto min-w-0">
+    @if ($previa)
+        <div class="mb-6 rounded-2xl border border-accent/40 bg-accent/10 p-4 flex flex-wrap items-start gap-3">
+            <x-heroicon-o-eye class="w-5 h-5 shrink-0 text-accent mt-0.5" />
+            <div class="flex-1 min-w-0 text-sm">
+                <p class="font-semibold text-text-primary">Pré-visualização — é assim que o aluno vê esta aula.</p>
+                <p class="text-text-secondary mt-0.5">
+                    @if ($conteudo->bloqueado)
+                        <span class="text-danger font-medium">Bloqueada manualmente:</span> os alunos ainda não conseguem abrir.
+                    @elseif ($conteudo->dias_liberacao > 0)
+                        Liberada para o aluno {{ $conteudo->dias_liberacao }} dia(s) após a matrícula.
+                    @else
+                        Liberada para o aluno logo após a matrícula.
+                    @endif
+                    Nada do que você fizer aqui conta como progresso.
+                </p>
+            </div>
+            <a href="{{ route('academico.turmas.conteudo', $turma) }}" class="shrink-0 text-sm font-medium text-primary hover:underline">
+                Voltar à edição
+            </a>
+        </div>
+    @endif
+
     <div class="mb-6">
-        <a href="{{ route('academico.minha-turma.modulo', [$turma, $modulo]) }}" class="text-sm text-primary hover:underline">&larr; {{ $modulo->nome }}</a>
+        @if ($previa)
+            <a href="{{ route('academico.turmas.conteudo', $turma) }}" class="text-sm text-primary hover:underline">&larr; {{ $turma->nome }} · {{ $modulo->nome }}</a>
+        @else
+            <a href="{{ route('academico.minha-turma.modulo', [$turma, $modulo]) }}" class="text-sm text-primary hover:underline">&larr; {{ $modulo->nome }}</a>
+        @endif
         <div class="flex items-center gap-3 mt-2 flex-wrap">
             <h1 class="text-2xl font-semibold text-text-primary">{{ $conteudo->titulo }}</h1>
             <x-badge variant="primary">{{ $conteudo->rotuloTipo() }}</x-badge>
@@ -67,14 +100,26 @@
                                     <div class="space-y-2">
                                         @foreach ($pergunta->opcoes as $opcao)
                                             <label class="flex items-start gap-2 text-sm text-text-secondary">
-                                                <input type="checkbox" wire:model="respostasSelecionadas.{{ $pergunta->id }}.{{ $opcao->id }}" class="mt-0.5 shrink-0 rounded bg-surface border-surface-border">
+                                                @if ($previa)
+                                                    {{-- Na prévia o professor vê o gabarito; nada é marcado nem salvo. --}}
+                                                    <input type="checkbox" disabled @checked($opcao->correta) class="mt-0.5 shrink-0 rounded bg-surface border-surface-border">
+                                                @else
+                                                    <input type="checkbox" wire:model="respostasSelecionadas.{{ $pergunta->id }}.{{ $opcao->id }}" class="mt-0.5 shrink-0 rounded bg-surface border-surface-border">
+                                                @endif
                                                 <span class="min-w-0 wrap-anywhere">{{ $opcao->texto }}</span>
+                                                @if ($previa && $opcao->correta)
+                                                    <x-badge variant="success">correta</x-badge>
+                                                @endif
                                             </label>
                                         @endforeach
                                     </div>
                                 </x-card>
                             @endforeach
-                            <x-button wire:click="enviarQuiz">Enviar respostas</x-button>
+                            @if ($previa)
+                                <p class="text-xs text-text-secondary">O aluno marca as opções e clica em "Enviar respostas". As corretas estão destacadas só pra você.</p>
+                            @else
+                                <x-button wire:click="enviarQuiz">Enviar respostas</x-button>
+                            @endif
                         </div>
                     @endif
                     @break
@@ -117,7 +162,7 @@
                     @endif
             @endswitch
 
-            @unless ($ehQuiz)
+            @unless ($ehQuiz || $previa)
                 <div class="flex justify-end">
                     <x-button wire:click="toggleConclusao" :variant="$concluido ? 'secondary' : 'primary'">
                         {{ $concluido ? 'Concluída ✓ (desmarcar)' : 'Marcar como concluída' }}
@@ -129,13 +174,13 @@
 
     <div class="flex items-center justify-between mt-8 pt-4 border-t border-surface-border text-sm">
         @if ($vizinhos['anterior'])
-            <a href="{{ route('academico.minha-turma.aula', [$turma, $vizinhos['anterior']]) }}" class="text-primary hover:underline">&larr; Aula anterior</a>
+            <a href="{{ route($rotaAula, [$turma, $vizinhos['anterior']]) }}" class="text-primary hover:underline">&larr; Aula anterior</a>
         @else
             <span class="text-text-secondary/50">&larr; Aula anterior</span>
         @endif
 
         @if ($vizinhos['proximo'])
-            <a href="{{ route('academico.minha-turma.aula', [$turma, $vizinhos['proximo']]) }}" class="text-primary hover:underline">Próxima aula &rarr;</a>
+            <a href="{{ route($rotaAula, [$turma, $vizinhos['proximo']]) }}" class="text-primary hover:underline">Próxima aula &rarr;</a>
         @else
             <span class="text-text-secondary/50">Próxima aula &rarr;</span>
         @endif

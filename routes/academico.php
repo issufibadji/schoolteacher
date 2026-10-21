@@ -11,6 +11,7 @@ use App\Livewire\Academico\CursoManager;
 use App\Livewire\Academico\MatriculaManager;
 use App\Livewire\Academico\MinhasTurmas;
 use App\Livewire\Academico\ModuloConteudoManager;
+use App\Livewire\Academico\PreviaConteudo;
 use App\Livewire\Academico\SalaAoVivo;
 use App\Livewire\Academico\TurmaManager;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,7 @@ Route::middleware(['auth', 'verified', 'check2fa'])->group(function () {
         Route::get('academico/minhas-turmas', MinhasTurmas::class)->name('academico.minhas-turmas.index');
         Route::get('academico/meus-alunos', AlunoManager::class)->name('academico.meus-alunos.index');
         Route::get('academico/turmas/{turma}/conteudo', ModuloConteudoManager::class)->name('academico.turmas.conteudo');
+        Route::get('academico/turmas/{turma}/conteudo/{conteudo}/previa', PreviaConteudo::class)->name('academico.turmas.conteudo.previa');
         Route::get('academico/turmas/{turma}/ao-vivo', AulaAoVivoManager::class)->name('academico.turmas.ao-vivo');
     });
 

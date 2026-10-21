@@ -42,6 +42,13 @@
                             </td>
                             <td class="px-4 py-3 text-text-secondary">{{ $conteudo->ordem }}</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap space-x-3">
+                                <a
+                                    href="{{ route('academico.turmas.conteudo.previa', [$turma, $conteudo]) }}"
+                                    title="Ver como o aluno vai ver esta aula"
+                                    class="inline-flex items-center gap-1 text-accent hover:underline text-sm"
+                                >
+                                    <x-heroicon-o-eye class="w-4 h-4" /> Visualizar
+                                </a>
                                 <button wire:click="editConteudo({{ $conteudo->id }})" class="text-primary hover:underline text-sm">Editar</button>
                                 <button
                                     wire:click="deleteConteudo({{ $conteudo->id }})"
