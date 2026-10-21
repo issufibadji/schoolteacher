@@ -13,9 +13,14 @@ class Conteudo extends Model
     use HasFactory;
 
     protected $fillable = [
-        'modulo_id', 'titulo', 'tipo', 'exercicio_subtipo', 'corpo', 'arquivo_path', 'url_externa',
-        'ordem', 'dias_liberacao', 'bloqueado',
+        'modulo_id', 'titulo', 'tipo', 'exercicio_subtipo', 'corpo', 'vocabulario', 'arquivo_path',
+        'audio_path', 'url_externa', 'ordem', 'dias_liberacao', 'bloqueado',
     ];
+
+    /**
+     * Tipos que aceitam áudio e lista de vocabulário.
+     */
+    public const TIPOS_COM_AUDIO_E_VOCABULARIO = ['texto', 'dialogo'];
 
     protected function casts(): array
     {
@@ -123,6 +128,7 @@ class Conteudo extends Model
             'video', 'video_curto' => 'play-circle',
             'pdf' => 'document-arrow-down',
             'exercicio' => 'clipboard-document-check',
+            'dialogo' => 'chat-bubble-left-right',
             'link' => 'link',
             default => 'document-text',
         };
@@ -135,9 +141,81 @@ class Conteudo extends Model
             'video_curto' => 'Vídeo curto',
             'pdf' => 'PDF',
             'exercicio' => $this->exercicio_subtipo === 'quiz' ? 'Quiz' : 'Exercício',
+            'dialogo' => 'Diálogo',
             'link' => 'Link',
             default => 'Texto',
         };
+    }
+
+    /**
+     * Falas de um diálogo escrito uma por linha:
+     *
+     *   Marie: Bonjour ! Comment tu t'appelles ? | Olá! Como você se chama?
+     *   Paul: Ça va ? - Tudo bem?                 ← traço com espaços também separa
+     *   (Paul sorri)                              ← sem "Nome:", vira narração
+     *
+     * O nome precisa começar com letra (então "10:30 ..." não vira personagem) e
+     * a tradução é opcional, depois do primeiro separador. Linhas vazias são ignoradas.
+     *
+     * @return array<int, array{personagem: ?string, texto: string, traducao: ?string}>
+     */
+    public static function interpretarDialogo(?string $texto): array
+    {
+        return collect(preg_split('/\R/u', (string) $texto))
+            ->map(fn (string $linha) => trim($linha))
+            ->filter()
+            ->map(function (string $linha) {
+                [$fala, $traducao] = self::separarTraducao($linha);
+
+                if (preg_match('/^(\p{L}[\p{L}\p{M}\s.\'’-]{0,39}):\s*(.+)$/u', $fala, $m)) {
+                    return ['personagem' => trim($m[1]), 'texto' => trim($m[2]), 'traducao' => $traducao ?: null];
+                }
+
+                return ['personagem' => null, 'texto' => $fala, 'traducao' => $traducao ?: null];
+            })
+            ->filter(fn (array $fala) => $fala['texto'] !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Separa "frase | tradução" no primeiro separador: "|" ou um traço (-, – ou —)
+     * com espaço dos dois lados. Professor tende a escrever com traço; traço sem
+     * espaço ("Est-ce que", "peut-être") não separa.
+     *
+     * @return array{0: string, 1: ?string}
+     */
+    private static function separarTraducao(string $linha): array
+    {
+        $partes = preg_split('/\s*\|\s*|\s+[-–—]\s+/u', $linha, 2);
+
+        return [trim($partes[0]), isset($partes[1]) && trim($partes[1]) !== '' ? trim($partes[1]) : null];
+    }
+
+    /**
+     * Personagens na ordem em que aparecem (define cor/lado do balão).
+     *
+     * @param  array<int, array{personagem: ?string}>  $falas
+     * @return array<int, string>
+     */
+    public static function personagensDoDialogo(array $falas): array
+    {
+        return collect($falas)->pluck('personagem')->filter()->unique()->values()->all();
+    }
+
+    /**
+     * Vocabulário escrito um termo por linha: "bonjour | olá". Sem "|", fica só o termo.
+     *
+     * @return array<int, array{termo: string, traducao: ?string}>
+     */
+    public static function interpretarVocabulario(?string $texto): array
+    {
+        return collect(preg_split('/\R/u', (string) $texto))
+            ->map(fn (string $linha) => self::separarTraducao(trim($linha)))
+            ->filter(fn (array $par) => $par[0] !== '')
+            ->map(fn (array $par) => ['termo' => $par[0], 'traducao' => $par[1] ?: null])
+            ->values()
+            ->all();
     }
 
     /**

@@ -45,7 +45,7 @@ class ModuloConteudoManager extends Component
     #[Validate('required|string|max:255')]
     public string $titulo = '';
 
-    #[Validate('required|in:video,video_curto,pdf,texto,exercicio,link')]
+    #[Validate('required|in:video,video_curto,pdf,texto,dialogo,exercicio,link')]
     public string $tipo = 'texto';
 
     public string $exercicioSubtipo = 'anexo';
@@ -57,6 +57,16 @@ class ModuloConteudoManager extends Component
     public string $urlExterna = '';
 
     public $arquivo = null;
+
+    /** Lista de vocabulário (texto/diálogo): "palavra | tradução", um por linha. */
+    public string $vocabulario = '';
+
+    /** Áudio opcional (texto/diálogo): upload novo, o atual salvo e o pedido de remoção. */
+    public $audio = null;
+
+    public ?string $audioAtual = null;
+
+    public bool $removerAudio = false;
 
     /**
      * @var array<int, array{id: ?int, enunciado: string, ordem: int, opcoes: array<int, array{id: ?int, texto: string, correta: bool, ordem: int}>}>
@@ -157,6 +167,7 @@ class ModuloConteudoManager extends Component
         $this->reset([
             'conteudoId', 'titulo', 'tipo', 'exercicioSubtipo', 'corpo', 'urlExterna',
             'arquivo', 'perguntas', 'conteudoOrdem', 'diasLiberacao', 'bloqueado',
+            'vocabulario', 'audio', 'audioAtual', 'removerAudio',
         ]);
         $this->moduloAtualId = $moduloId;
         $this->resetErrorBag();
@@ -175,6 +186,10 @@ class ModuloConteudoManager extends Component
         $this->corpo = $conteudo->corpo ?? '';
         $this->urlExterna = $conteudo->url_externa ?? '';
         $this->arquivo = null;
+        $this->vocabulario = $conteudo->vocabulario ?? '';
+        $this->audio = null;
+        $this->audioAtual = $conteudo->audio_path;
+        $this->removerAudio = false;
         $this->conteudoOrdem = $conteudo->ordem;
         $this->diasLiberacao = $conteudo->dias_liberacao;
         $this->bloqueado = $conteudo->bloqueado;
@@ -228,10 +243,30 @@ class ModuloConteudoManager extends Component
     {
         $this->validate([
             'titulo' => 'required|string|max:255',
-            'tipo' => 'required|in:video,video_curto,pdf,texto,exercicio,link',
+            'tipo' => 'required|in:video,video_curto,pdf,texto,dialogo,exercicio,link',
             'conteudoOrdem' => 'required|integer|min:0',
             'diasLiberacao' => 'required|integer|min:0',
         ]);
+
+        if ($this->tipo === 'dialogo') {
+            $this->validate(['corpo' => 'required|string'], ['corpo.required' => 'Escreva o diálogo, uma fala por linha.']);
+
+            if (Conteudo::interpretarDialogo($this->corpo) === []) {
+                $this->addError('corpo', 'Escreva o diálogo, uma fala por linha.');
+
+                return;
+            }
+        }
+
+        $aceitaAudio = in_array($this->tipo, Conteudo::TIPOS_COM_AUDIO_E_VOCABULARIO, true);
+
+        if ($aceitaAudio) {
+            // mpga: o Symfony identifica MP3 (audio/mpeg) como "mpga".
+            $this->validate(
+                ['audio' => 'nullable|file|mimes:mp3,mpga,m4a,mp4,wav,ogg,oga,aac,webm|max:20480', 'vocabulario' => 'nullable|string'],
+                ['audio.mimes' => 'Envie um áudio MP3, M4A, WAV, OGG, AAC ou WEBM.', 'audio.max' => 'O áudio pode ter no máximo 20 MB.'],
+            );
+        }
 
         if ($this->tipo === 'exercicio') {
             $this->validate(['exercicioSubtipo' => 'required|in:anexo,quiz']);
@@ -281,7 +316,8 @@ class ModuloConteudoManager extends Component
                 'titulo' => $this->titulo,
                 'tipo' => $this->tipo,
                 'exercicio_subtipo' => $this->tipo === 'exercicio' ? $this->exercicioSubtipo : null,
-                'corpo' => $this->tipo === 'texto' ? ($this->corpo ?: null) : null,
+                'corpo' => in_array($this->tipo, ['texto', 'dialogo'], true) ? ($this->corpo ?: null) : null,
+                'vocabulario' => $aceitaAudio ? (trim($this->vocabulario) ?: null) : null,
                 'url_externa' => in_array($this->tipo, ['video', 'video_curto', 'link'], true) ? $this->urlExterna : null,
                 'ordem' => $this->conteudoOrdem,
                 'dias_liberacao' => $this->diasLiberacao,
@@ -299,6 +335,20 @@ class ModuloConteudoManager extends Component
         } elseif (! $precisaDeArquivo && $conteudo->arquivo_path) {
             Storage::disk('public')->delete($conteudo->arquivo_path);
             $conteudo->arquivo_path = null;
+            $conteudo->save();
+        }
+
+        // Áudio: troca pelo novo, remove se pedido ou se o tipo deixou de aceitar áudio.
+        if ($conteudo->audio_path && ($this->audio || $this->removerAudio || ! $aceitaAudio)) {
+            Storage::disk('public')->delete($conteudo->audio_path);
+            $conteudo->audio_path = null;
+        }
+
+        if ($aceitaAudio && $this->audio) {
+            $conteudo->audio_path = $this->audio->store('conteudos-audio', 'public');
+        }
+
+        if ($conteudo->isDirty('audio_path')) {
             $conteudo->save();
         }
 
@@ -331,8 +381,8 @@ class ModuloConteudoManager extends Component
     {
         $conteudo = Conteudo::findOrFail($id);
 
-        if ($conteudo->arquivo_path) {
-            Storage::disk('public')->delete($conteudo->arquivo_path);
+        foreach (array_filter([$conteudo->arquivo_path, $conteudo->audio_path]) as $path) {
+            Storage::disk('public')->delete($path);
         }
 
         $conteudo->delete();

@@ -56,7 +56,22 @@
         </x-card>
     @else
         <div class="space-y-4">
+            @if ($conteudo->audio_path)
+                <div class="glow-border bg-surface-card/80 backdrop-blur border border-surface-border rounded-2xl p-4 flex flex-wrap items-center gap-3">
+                    <span class="inline-flex items-center gap-2 text-sm font-medium text-text-primary">
+                        <x-heroicon-o-speaker-wave class="w-5 h-5 text-primary" /> Ouça a aula
+                    </span>
+                    <audio controls preload="metadata" src="{{ asset('storage/'.$conteudo->audio_path) }}" class="w-full sm:flex-1 min-w-0"></audio>
+                </div>
+            @endif
+
             @switch(true)
+                @case($conteudo->tipo === 'dialogo')
+                    <x-card>
+                        <x-dialogo :texto="$conteudo->corpo" />
+                    </x-card>
+                    @break
+
                 @case(in_array($conteudo->tipo, ['video', 'video_curto'], true))
                     @if ($conteudo->embedUrlVideo())
                         <iframe src="{{ $conteudo->embedUrlVideo() }}" class="w-full aspect-video rounded-2xl border border-surface-border bg-black" allow="autoplay; fullscreen" allowfullscreen></iframe>
@@ -161,6 +176,10 @@
                         <x-card><p class="text-sm text-text-secondary">Nenhum arquivo anexado ainda.</p></x-card>
                     @endif
             @endswitch
+
+            @if (in_array($conteudo->tipo, \App\Models\Conteudo::TIPOS_COM_AUDIO_E_VOCABULARIO, true))
+                <x-vocabulario :texto="$conteudo->vocabulario" />
+            @endif
 
             @unless ($ehQuiz || $previa)
                 <div class="flex justify-end">

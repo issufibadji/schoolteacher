@@ -130,31 +130,98 @@
         </form>
     </x-modal>
 
-    <x-modal name="conteudo-form" title="Conteúdo">
-        <form wire:submit="saveConteudo" class="space-y-4">
+    @php
+        $tiposConteudo = [
+            'texto' => ['Texto', 'document-text'],
+            'dialogo' => ['Diálogo', 'chat-bubble-left-right'],
+            'video' => ['Vídeo', 'play-circle'],
+            'video_curto' => ['Vídeo curto', 'film'],
+            'pdf' => ['PDF', 'document-arrow-down'],
+            'exercicio' => ['Exercício', 'clipboard-document-check'],
+            'link' => ['Link', 'link'],
+        ];
+        $exemploDialogo = "Marie: Bonjour ! Comment tu t'appelles ? | Olá! Como você se chama?\nPaul: Je m'appelle Paul. Et toi ? | Eu me chamo Paul. E você?\n(Marie sorri)\nMarie: Moi, c'est Marie. Enchantée ! | Eu sou a Marie. Prazer!";
+        $temExtras = in_array($tipo, \App\Models\Conteudo::TIPOS_COM_AUDIO_E_VOCABULARIO, true);
+    @endphp
+
+    <x-modal name="conteudo-form" :title="$conteudoId ? 'Editar conteúdo' : 'Novo conteúdo'" size="2xl">
+        <form id="form-conteudo" wire:submit="saveConteudo" class="space-y-6">
             <div>
-                <label class="block text-sm font-medium mb-1 text-text-primary">Título</label>
-                <input type="text" wire:model="titulo" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
+                <label for="conteudo-titulo" class="block text-sm font-medium mb-1 text-text-primary">Título da aula</label>
+                <input id="conteudo-titulo" type="text" wire:model="titulo" placeholder="Ex.: Aula 02 — Se présenter" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
                 @error('titulo') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1 text-text-primary">Tipo</label>
-                <select wire:model.live="tipo" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
-                    <option value="video">Vídeo (YouTube/Vimeo)</option>
-                    <option value="video_curto">Vídeo curto (30s a 1min)</option>
-                    <option value="pdf">PDF</option>
-                    <option value="texto">Texto</option>
-                    <option value="exercicio">Exercício</option>
-                    <option value="link">Link</option>
-                </select>
-            </div>
+            {{-- Tipo em cartões clicáveis: o professor vê todas as opções de uma vez --}}
+            <fieldset>
+                <legend class="block text-sm font-medium mb-2 text-text-primary">Tipo de conteúdo</legend>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    @foreach ($tiposConteudo as $valor => [$rotulo, $icone])
+                        <label class="relative cursor-pointer">
+                            <input type="radio" wire:model.live="tipo" value="{{ $valor }}" class="peer sr-only">
+                            <span class="flex items-center gap-2 h-full px-3 py-2.5 pointer-coarse:min-h-11 rounded-xl border text-sm transition border-surface-border text-text-secondary hover:border-primary/50 hover:text-text-primary peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-text-primary peer-checked:font-medium peer-focus-visible:ring-2 peer-focus-visible:ring-primary">
+                                <x-icon :name="'heroicon-o-'.$icone" class="w-5 h-5 shrink-0" />
+                                {{ $rotulo }}
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
 
             @if ($tipo === 'texto')
                 <div>
-                    <label class="block text-sm font-medium mb-1 text-text-primary">Corpo (texto livre)</label>
-                    <textarea wire:model="corpo" rows="4" class="w-full rounded-md bg-surface border-surface-border text-text-primary"></textarea>
+                    <label for="conteudo-corpo" class="block text-sm font-medium mb-1 text-text-primary">Texto da aula</label>
+                    <textarea id="conteudo-corpo" wire:model="corpo" rows="8" class="w-full rounded-md bg-surface border-surface-border text-text-primary"></textarea>
+                    <p class="mt-1 text-xs text-text-secondary">As quebras de linha que você digitar aparecem iguais pro aluno.</p>
                     @error('corpo') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                </div>
+            @endif
+
+            @if ($tipo === 'dialogo')
+                {{-- Editor à esquerda, prévia à direita (empilha no celular) --}}
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="flex flex-col min-w-0">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <label for="dialogo-corpo" class="text-sm font-medium text-text-primary">Diálogo</label>
+                            @if (trim($corpo) === '')
+                                <button type="button" @click="$wire.set('corpo', @js($exemploDialogo))" class="text-xs font-medium text-primary hover:underline pointer-coarse:min-h-11">
+                                    Usar exemplo
+                                </button>
+                            @endif
+                        </div>
+                        <textarea
+                            id="dialogo-corpo"
+                            wire:model.live.debounce.500ms="corpo"
+                            rows="11"
+                            placeholder="Escreva uma fala por linha…"
+                            class="flex-1 w-full rounded-md bg-surface border-surface-border text-text-primary font-mono text-sm"
+                        ></textarea>
+                        @error('corpo') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+
+                        {{-- Guia: exemplo real (copiável) separado da explicação, pra não ser colado junto --}}
+                        <div class="mt-2 rounded-lg bg-surface/60 border border-surface-border px-3 py-2 text-xs text-text-secondary">
+                            <p class="font-medium text-text-primary mb-1">Como escrever — exemplo:</p>
+                            <pre class="font-mono text-text-primary whitespace-pre-wrap wrap-anywhere">Marie: Bonjour ! | Olá!
+John: Ça va ? - Tudo bem?
+(Marie sorri)</pre>
+                            <ul class="mt-2 space-y-0.5 list-disc pl-4">
+                                <li>Comece a linha com o <strong class="text-text-primary">nome</strong> e dois-pontos.</li>
+                                <li>A <strong class="text-text-primary">tradução</strong> é opcional: depois de <code class="font-mono text-text-primary">|</code> ou de um traço com espaços (<code class="font-mono text-text-primary"> - </code>). O aluno vê só se clicar em "Mostrar tradução".</li>
+                                <li>Linha sem nome vira <strong class="text-text-primary">narração</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="min-w-0">
+                        <p class="mb-1 text-sm font-medium text-text-primary">Prévia — como o aluno vê</p>
+                        <div class="rounded-xl border border-dashed border-surface-border bg-surface/40 p-3 md:max-h-96 md:overflow-y-auto">
+                            @if (trim($corpo) !== '')
+                                <x-dialogo :texto="$corpo" compacto />
+                            @else
+                                <p class="py-10 text-center text-sm text-text-secondary">A conversa aparece aqui enquanto você escreve.</p>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             @endif
 
@@ -258,27 +325,81 @@
                 @endif
             @endif
 
-            <div>
-                <label class="block text-sm font-medium mb-1 text-text-primary">Ordem</label>
-                <input type="number" wire:model="conteudoOrdem" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
-            </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1 text-text-primary">Liberar após quantos dias da matrícula</label>
-                <input type="number" wire:model="diasLiberacao" min="0" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
-                <p class="mt-1 text-xs text-text-secondary">0 = liberado imediatamente após a matrícula.</p>
-                @error('diasLiberacao') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
-            </div>
+            @if ($temExtras)
+                {{-- Recursos extras: recolhível, abre sozinho se já tiver áudio ou vocabulário --}}
+                <section x-data="{ aberto: @js((bool) ($audioAtual || trim($vocabulario) !== '')) }" class="rounded-xl border border-surface-border">
+                    <button type="button" @click="aberto = ! aberto" x-bind:aria-expanded="aberto.toString()" class="w-full flex items-center justify-between gap-3 px-4 py-3 pointer-coarse:min-h-11 text-left">
+                        <span class="flex flex-wrap items-center gap-x-2 text-sm font-medium text-text-primary">
+                            <x-heroicon-o-sparkles class="w-5 h-5 text-accent" />
+                            Recursos extras <span class="font-normal text-text-secondary">(opcional) — áudio e vocabulário</span>
+                        </span>
+                        <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0 text-text-secondary transition-transform" x-bind:class="aberto && 'rotate-180'" />
+                    </button>
 
-            <label class="flex items-center gap-2 text-sm text-text-secondary">
-                <input type="checkbox" wire:model="bloqueado" class="rounded bg-surface border-surface-border">
-                Bloqueado manualmente (força bloqueio mesmo se o prazo já passou)
-            </label>
+                    <div x-show="aberto" x-cloak class="grid gap-4 md:grid-cols-2 px-4 pb-4">
+                        <div class="min-w-0">
+                            <label for="conteudo-audio" class="block text-sm font-medium mb-1 text-text-primary">Áudio</label>
+                            <input id="conteudo-audio" type="file" wire:model="audio" accept="audio/*" class="w-full text-sm text-text-secondary file:mr-3 file:rounded-full file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-primary">
+                            <div wire:loading wire:target="audio" class="text-xs text-text-secondary mt-1">Enviando...</div>
+                            @error('audio') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                            <p class="mt-1 text-xs text-text-secondary">MP3, M4A, WAV ou OGG, até 20 MB — ex.: a gravação do diálogo pra o aluno ouvir a pronúncia.</p>
 
-            <div class="flex justify-end gap-3 pt-2">
-                <x-button variant="secondary" type="button" @click="open = false">Cancelar</x-button>
-                <x-button type="submit">Salvar</x-button>
-            </div>
+                            @if ($audioAtual && ! $audio)
+                                <div class="mt-2 space-y-2">
+                                    <audio controls preload="none" src="{{ asset('storage/'.$audioAtual) }}" class="w-full h-9 {{ $removerAudio ? 'opacity-40' : '' }}"></audio>
+                                    <label class="flex items-center gap-2 text-xs text-text-secondary">
+                                        <input type="checkbox" wire:model.live="removerAudio" class="rounded bg-surface border-surface-border">
+                                        Remover áudio atual
+                                    </label>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="min-w-0">
+                            <label for="conteudo-vocabulario" class="block text-sm font-medium mb-1 text-text-primary">Vocabulário</label>
+                            <textarea
+                                id="conteudo-vocabulario"
+                                wire:model="vocabulario"
+                                rows="5"
+                                placeholder="Ex.: bonjour | olá"
+                                class="w-full rounded-md bg-surface border-surface-border text-text-primary font-mono text-sm"
+                            ></textarea>
+                            <p class="mt-1 text-xs text-text-secondary">Uma palavra por linha: <code class="font-mono text-text-primary">bonjour | olá</code> ou <code class="font-mono text-text-primary">bonjour - olá</code>. Aparece no fim da aula.</p>
+                            @error('vocabulario') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </section>
+            @endif
+
+            {{-- Publicação: quando e se o aluno vê --}}
+            <section class="rounded-xl bg-surface/50 border border-surface-border p-4">
+                <h3 class="flex items-center gap-2 text-sm font-medium text-text-primary mb-3">
+                    <x-heroicon-o-calendar-days class="w-5 h-5 text-primary" /> Publicação
+                </h3>
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <div>
+                        <label for="conteudo-ordem" class="block text-xs font-medium mb-1 text-text-secondary">Ordem no módulo</label>
+                        <input id="conteudo-ordem" type="number" min="0" wire:model="conteudoOrdem" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
+                        @error('conteudoOrdem') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="conteudo-dias" class="block text-xs font-medium mb-1 text-text-secondary">Liberar após (dias da matrícula)</label>
+                        <input id="conteudo-dias" type="number" min="0" wire:model="diasLiberacao" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
+                        <p class="mt-1 text-xs text-text-secondary">0 = libera na hora.</p>
+                        @error('diasLiberacao') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                    </div>
+                    <label class="flex items-start gap-2 sm:pt-6 text-sm text-text-secondary cursor-pointer">
+                        <input type="checkbox" wire:model="bloqueado" class="mt-0.5 rounded bg-surface border-surface-border">
+                        <span><span class="font-medium text-text-primary">Bloquear</span><br><span class="text-xs">Alunos não abrem, mesmo depois do prazo.</span></span>
+                    </label>
+                </div>
+            </section>
         </form>
+
+        <x-slot:footer>
+            <x-button variant="secondary" type="button" @click="open = false">Cancelar</x-button>
+            <x-button type="submit" form="form-conteudo" wire:loading.attr="disabled" wire:target="saveConteudo,audio,arquivo">Salvar conteúdo</x-button>
+        </x-slot:footer>
     </x-modal>
 </div>
