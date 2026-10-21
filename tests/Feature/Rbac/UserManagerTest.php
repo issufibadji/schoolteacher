@@ -97,7 +97,7 @@ class UserManagerTest extends TestCase
         $criadoPorEle = User::factory()->create(['name' => 'Aluno Criado Pela Ana', 'criado_por' => $professor->id]);
         $criadoPorEle->assignRole('aluno');
 
-        // Aluno criado pelo admin e matriculado numa turma da professora: ela vê, mas não edita.
+        // Aluno criado pelo admin e matriculado numa turma da professora: também é dela.
         $matriculado = User::factory()->create(['name' => 'Aluno Matriculado Na Ana']);
         $matriculado->assignRole('aluno');
         $turma = Turma::factory()->create(['professor_id' => $professor->id, 'curso_id' => Curso::factory()->create(['professor_id' => $professor->id])->id]);
@@ -148,27 +148,60 @@ class UserManagerTest extends TestCase
         $this->assertSame($professor->id, $novo->criado_por);
     }
 
-    public function test_professor_edits_and_deletes_only_students_he_created(): void
+    public function test_professor_edits_and_deletes_his_students_but_not_shared_ones(): void
     {
         [$professor, $criadoPorEle, $matriculado] = $this->professorComAlunos();
 
+        // Edita tanto o que cadastrou quanto o matriculado na turma dele; não promove ao editar.
+        foreach ([$criadoPorEle, $matriculado] as $aluno) {
+            Livewire::actingAs($professor)->test(UserManager::class)
+                ->call('edit', $aluno->id)
+                ->set('name', "Editado {$aluno->id}")
+                ->set('roles', ['admin'])
+                ->call('save')
+                ->assertHasNoErrors();
+
+            $this->assertSame("Editado {$aluno->id}", $aluno->fresh()->name);
+            $this->assertSame(['aluno'], $aluno->fresh()->getRoleNames()->all());
+        }
+
+        Livewire::actingAs($professor)->test(UserManager::class)->call('toggleActive', $matriculado->id)->assertHasNoErrors();
+        // Exigir 2FA continua só do admin.
+        Livewire::actingAs($professor)->test(UserManager::class)->assertDontSee('Exigir 2FA')->call('toggleRequires2fa', $matriculado->id)->assertForbidden();
+        $this->assertFalse($matriculado->fresh()->active);
+
+        // Aluno que também está na turma de outro professor: edita, mas não exclui.
+        $outro = User::factory()->create();
+        $outro->assignRole('professor');
+        $turmaDoOutro = Turma::factory()->create(['professor_id' => $outro->id, 'curso_id' => Curso::factory()->create(['professor_id' => $outro->id])->id]);
+        $compartilhado = User::factory()->create(['name' => 'Aluno Compartilhado', 'criado_por' => $professor->id]);
+        $compartilhado->assignRole('aluno');
+        $turmaDoOutro->alunos()->attach($compartilhado->id, ['data_matricula' => now()->toDateString(), 'status' => 'ativo']);
+
         Livewire::actingAs($professor)->test(UserManager::class)
-            ->call('edit', $criadoPorEle->id)
-            ->set('name', 'Nome Corrigido')
-            ->set('roles', ['admin'])
-            ->call('save')
-            ->assertHasNoErrors();
+            ->assertSee('Compartilhado')
+            ->call('delete', $compartilhado->id)
+            ->assertForbidden();
+        $this->assertDatabaseHas('users', ['id' => $compartilhado->id]);
 
-        $this->assertSame('Nome Corrigido', $criadoPorEle->fresh()->name);
-        $this->assertSame(['aluno'], $criadoPorEle->fresh()->getRoleNames()->all(), 'não promove ao editar');
-
-        Livewire::actingAs($professor)->test(UserManager::class)->call('edit', $matriculado->id)->assertForbidden();
-        Livewire::actingAs($professor)->test(UserManager::class)->call('toggleActive', $matriculado->id)->assertForbidden();
-        Livewire::actingAs($professor)->test(UserManager::class)->call('delete', $matriculado->id)->assertForbidden();
-        $this->assertDatabaseHas('users', ['id' => $matriculado->id]);
-
+        // Os dele (não compartilhados) ele exclui.
+        Livewire::actingAs($professor)->test(UserManager::class)->call('delete', $matriculado->id);
         Livewire::actingAs($professor)->test(UserManager::class)->call('delete', $criadoPorEle->id);
+        $this->assertDatabaseMissing('users', ['id' => $matriculado->id]);
         $this->assertDatabaseMissing('users', ['id' => $criadoPorEle->id]);
+    }
+
+    public function test_professor_cannot_touch_students_of_another_professor(): void
+    {
+        [$professor] = $this->professorComAlunos();
+
+        $outro = User::factory()->create();
+        $outro->assignRole('professor');
+        $alunoDoOutro = User::factory()->create(['criado_por' => $outro->id]);
+        $alunoDoOutro->assignRole('aluno');
+
+        Livewire::actingAs($professor)->test(UserManager::class)->call('edit', $alunoDoOutro->id)->assertForbidden();
+        Livewire::actingAs($professor)->test(UserManager::class)->call('delete', $alunoDoOutro->id)->assertForbidden();
     }
 
     public function test_professor_cannot_touch_other_professors_or_admins(): void

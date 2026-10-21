@@ -3,7 +3,7 @@
         <div>
             <h1 class="text-2xl font-semibold text-text-primary">Usuários</h1>
             @unless ($ehAdmin)
-                <p class="text-sm text-text-secondary">Seus alunos: os das suas turmas e os que você cadastrou. Você edita só os que cadastrou.</p>
+                <p class="text-sm text-text-secondary">Seus alunos: os das suas turmas e os que você cadastrou.</p>
             @endunless
         </div>
         @can('create', \App\Models\User::class)
@@ -72,7 +72,9 @@
                         {{ $user->email_verified_at ? 'Sim' : 'Não' }}
                     </x-badge>
                 </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap space-x-3">
+                <td class="px-4 py-3">
+                    {{-- Quebra em mais linhas quando não cabe, em vez de vazar a coluna --}}
+                    <div class="flex flex-wrap justify-end gap-x-3 gap-y-1 min-w-36">
                     @if ($impersonation->podeAcessarComo(auth()->user(), $user))
                         <button
                             wire:click="acessarComo({{ $user->id }})"
@@ -87,9 +89,11 @@
                         <button wire:click="toggleActive({{ $user->id }})" class="text-text-secondary hover:underline text-sm">
                             {{ $user->active ? 'Desativar' : 'Ativar' }}
                         </button>
-                        <button wire:click="toggleRequires2fa({{ $user->id }})" class="text-text-secondary hover:underline text-sm">
-                            {{ $user->requires_2fa ? 'Não exigir 2FA' : 'Exigir 2FA' }}
-                        </button>
+                        @if ($ehAdmin)
+                            <button wire:click="toggleRequires2fa({{ $user->id }})" class="text-text-secondary hover:underline text-sm">
+                                {{ $user->requires_2fa ? 'Não exigir 2FA' : 'Exigir 2FA' }}
+                            </button>
+                        @endif
                     @endcan
                     @can('delete', $user)
                         <button
@@ -99,7 +103,13 @@
                         >
                             Excluir
                         </button>
+                    @elsecan('update', $user)
+                        {{-- Professor: aluno também está na turma de outro professor — não exclui a conta. --}}
+                        <span class="text-xs text-text-secondary" title="Este aluno também está na turma de outro professor. Para tirá-lo da sua turma, use Desmatricular na tela de Matrícula.">
+                            Compartilhado
+                        </span>
                     @endcan
+                    </div>
                 </td>
             </tr>
         @endforeach

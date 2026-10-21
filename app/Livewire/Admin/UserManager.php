@@ -160,6 +160,8 @@ class UserManager extends Component
         $user = User::findOrFail($id);
 
         Gate::authorize('update', $user);
+        // Exigir 2FA é configuração de segurança: só o admin.
+        abort_unless($this->ehAdmin(), 403);
 
         $user->forceFill(['requires_2fa' => ! $user->requires_2fa])->save();
     }
