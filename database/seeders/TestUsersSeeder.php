@@ -24,10 +24,8 @@ class TestUsersSeeder extends Seeder
         }
 
         $admin = $this->criarUsuario('Admin Teste', 'admin@teste.com', 'admin');
-        $this->criarUsuario('Manager Teste', 'manager@teste.com', 'manager');
-        $this->criarUsuario('Operator Teste', 'operator@teste.com', 'operator');
-        // Diretor que também dá aula: alterna entre os dois perfis no topo da tela.
-        $this->criarUsuario('Diretor Professor Teste', 'diretor@teste.com', 'manager')->assignRole('professor');
+        // Segundo professor: serve pra conferir que um professor não vê o que é do outro.
+        $this->criarUsuario('Diretor Professor Teste', 'diretor@teste.com', 'professor');
         $professor = $this->criarUsuario('Professor Teste', 'professor@teste.com', 'professor');
         $aluno = $this->criarUsuario('Aluno Teste', 'aluno@teste.com', 'aluno');
 
@@ -56,7 +54,7 @@ class TestUsersSeeder extends Seeder
     {
         $curso = Curso::updateOrCreate(
             ['nome' => 'Inglês Teste'],
-            ['tipo' => 'curto_prazo', 'descricao' => 'Curso de teste pra ambiente local.', 'ativo' => true],
+            ['tipo' => 'curto_prazo', 'descricao' => 'Curso de teste pra ambiente local.', 'ativo' => true, 'professor_id' => $professor->id],
         );
 
         $turma = Turma::updateOrCreate(

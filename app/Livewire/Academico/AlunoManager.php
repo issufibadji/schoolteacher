@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+/**
+ * "Meus Alunos": só os alunos do professor logado — das turmas dele ou
+ * cadastrados por ele —, com as turmas DELE em que cada um está.
+ */
 #[Layout('components.layouts.master')]
 class AlunoManager extends Component
 {
@@ -14,11 +18,10 @@ class AlunoManager extends Component
     {
         $professor = Auth::user();
 
-        $alunos = User::whereHas('turmasMatriculadas', function ($query) use ($professor) {
-            $query->where('professor_id', $professor->id);
-        })->with(['turmasMatriculadas' => function ($query) use ($professor) {
-            $query->where('professor_id', $professor->id);
-        }])->orderBy('name')->get();
+        $alunos = User::alunosDoProfessor($professor)
+            ->with(['turmasMatriculadas' => fn ($query) => $query->where('professor_id', $professor->id)])
+            ->orderBy('name')
+            ->get();
 
         return view('livewire.academico.aluno-manager', [
             'alunos' => $alunos,

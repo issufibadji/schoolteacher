@@ -3,6 +3,7 @@
 namespace Tests\Feature\Rbac;
 
 use App\Models\User;
+use Database\Seeders\AcademicoPermissionSeeder;
 use Database\Seeders\MenuSideBarSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,14 +30,14 @@ class PermissionTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_user_with_manager_role_can_view_the_list(): void
+    public function test_aluno_cannot_view_the_users_list(): void
     {
+        $this->seed(AcademicoPermissionSeeder::class);
+
         $user = User::factory()->create();
-        $user->assignRole('manager');
+        $user->assignRole('aluno');
 
-        $response = $this->actingAs($user)->get(route('admin.users.index'));
-
-        $response->assertOk();
+        $this->actingAs($user)->get(route('admin.users.index'))->assertForbidden();
     }
 
     public function test_admin_bypasses_permission_checks(): void
@@ -52,7 +53,7 @@ class PermissionTest extends TestCase
     public function test_dashboard_link_only_shows_for_users_with_permission(): void
     {
         $withPermission = User::factory()->create();
-        $withPermission->assignRole('manager');
+        $withPermission->assignRole('admin');
 
         $withoutPermission = User::factory()->create();
 

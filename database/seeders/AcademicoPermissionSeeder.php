@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class AcademicoPermissionSeeder extends Seeder
@@ -29,25 +28,19 @@ class AcademicoPermissionSeeder extends Seeder
         $admin = Role::findOrCreate('admin');
         $admin->givePermissionTo($permissions);
 
-        // Manager é um perfil acima do professor (tipo diretor) — gerencia
-        // cursos, turmas e matrículas de qualquer professor. Matrícula é
-        // exclusiva do manager: um professor "puro" não matricula/desmatricula
-        // aluno — só gerencia módulo/conteúdo da própria turma (manage-own-turmas).
-        // Manager que também dá aula recebe o papel professor e alterna entre
-        // os dois perfis no topo da tela (User::PERFIS_ALTERNAVEIS).
-        $manager = Role::findOrCreate('manager');
-        $manager->givePermissionTo(['manage-cursos', 'manage-turmas', 'manage-matriculas']);
-        $manager->revokePermissionTo('manage-own-turmas');
+        // O professor cria e gerencia os próprios cursos, turmas, matrículas e
+        // conteúdo. A permissão libera a TELA; o que ele enxerga dentro dela é só
+        // o que é dele (scopes + CursoPolicy/TurmaPolicy). Só o admin vê tudo.
+        foreach (['view-users', 'create-users', 'edit-users', 'delete-users'] as $permission) {
+            Permission::findOrCreate($permission);
+        }
 
         $professor = Role::findOrCreate('professor');
-        $professor->givePermissionTo('manage-own-turmas');
-
-        // Managers que já têm turma própria (de antes da troca de perfil)
-        // ganham o papel professor, pra não perderem acesso às turmas.
-        User::role('manager')
-            ->whereHas('turmasComoProfessor')
-            ->get()
-            ->each(fn (User $user) => $user->assignRole('professor'));
+        $professor->syncPermissions([
+            'manage-cursos', 'manage-turmas', 'manage-matriculas', 'manage-own-turmas',
+            // Tela "Usuários": só cadastra aluno e só mexe nos que cadastrou (UserPolicy).
+            'view-users', 'create-users', 'edit-users', 'delete-users',
+        ]);
 
         $aluno = Role::findOrCreate('aluno');
         $aluno->givePermissionTo('view-own-turma');

@@ -4,43 +4,39 @@ namespace App\Policies;
 
 use App\Models\User;
 
+/**
+ * Tela "Usuários". O admin passa por tudo via Gate::before. O professor só
+ * cadastra ALUNOS (o perfil é forçado em UserManager) e só altera/exclui os
+ * alunos que ele mesmo cadastrou — aluno criado pelo admin, que pode estar na
+ * turma de outro professor, ele só vê.
+ */
 class UserPolicy
 {
-    /**
-     * Papéis que um manager pode gerenciar — nunca admin ou outro manager.
-     * Admin passa por tudo via Gate::before, então não precisa aparecer aqui.
-     */
-    public const PAPEIS_GERENCIAVEIS_POR_MANAGER = ['professor', 'aluno', 'operator'];
-
     public function view(User $user, User $alvo): bool
     {
-        return $this->podeGerenciar($user, $alvo);
+        return $user->hasRole('professor')
+            && User::alunosDoProfessor($user)->whereKey($alvo->id)->exists();
     }
 
     public function create(User $user): bool
     {
-        return $user->atuaComo('manager');
+        return $user->hasRole('professor');
     }
 
     public function update(User $user, User $alvo): bool
     {
-        return $this->podeGerenciar($user, $alvo);
+        return $this->ehAlunoCadastradoPor($user, $alvo);
     }
 
     public function delete(User $user, User $alvo): bool
     {
-        return $this->podeGerenciar($user, $alvo);
+        return $this->ehAlunoCadastradoPor($user, $alvo);
     }
 
-    private function podeGerenciar(User $user, User $alvo): bool
+    private function ehAlunoCadastradoPor(User $professor, User $alvo): bool
     {
-        if (! $user->atuaComo('manager')) {
-            return false;
-        }
-
-        return $alvo->roles->isEmpty()
-            || $alvo->roles->pluck('name')->every(
-                fn (string $role) => in_array($role, self::PAPEIS_GERENCIAVEIS_POR_MANAGER, true),
-            );
+        return $professor->hasRole('professor')
+            && $alvo->criado_por === $professor->id
+            && $alvo->getRoleNames()->all() === ['aluno'];
     }
 }

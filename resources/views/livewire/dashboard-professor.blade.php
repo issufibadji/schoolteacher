@@ -10,7 +10,7 @@
     </div>
 
     <div class="flex flex-wrap gap-3">
-        <a href="{{ route('academico.minhas-turmas.index') }}" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white bg-primary hover:brightness-110 shadow-lg shadow-primary/30 transition">
+        <a href="{{ route('academico.turmas.index') }}" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-white bg-primary hover:brightness-110 shadow-lg shadow-primary/30 transition">
             <x-heroicon-o-rectangle-group class="w-4 h-4" /> Minhas turmas
         </a>
         <a href="{{ route('academico.meus-alunos.index') }}" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-text-primary bg-surface-card border border-surface-border hover:bg-surface-border/50 transition">

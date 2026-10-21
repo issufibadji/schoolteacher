@@ -47,9 +47,10 @@ class DadosDemonstracaoSeeder extends Seeder
             ['Inglês para Negócios e Comunicação Corporativa Internacional', 'longo_prazo'],
             ['Preparatório Intensivo para Certificação TOEFL iBT', 'curto_prazo'],
             ['Conversação Avançada', 'longo_prazo'],
-        ])->map(fn (array $c) => Curso::updateOrCreate(
+        ])->map(fn (array $c, int $i) => Curso::updateOrCreate(
             ['nome' => $c[0]],
-            ['tipo' => $c[1], 'descricao' => 'Curso de demonstração com nome longo.', 'ativo' => true],
+            // Dono: os dois primeiros do professor, o último do "diretor" (outro professor).
+            ['tipo' => $c[1], 'descricao' => 'Curso de demonstração com nome longo.', 'ativo' => true, 'professor_id' => $i < 2 ? $professor->id : $diretor->id],
         ));
 
         $turmas = [

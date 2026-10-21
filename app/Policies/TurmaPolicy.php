@@ -5,6 +5,10 @@ namespace App\Policies;
 use App\Models\Turma;
 use App\Models\User;
 
+/**
+ * Professor só mexe nas turmas em que é o responsável (professor_id); aluno só
+ * vê as turmas em que está matriculado. O admin passa por tudo via Gate::before.
+ */
 class TurmaPolicy
 {
     public function view(User $user, Turma $turma): bool
@@ -13,8 +17,8 @@ class TurmaPolicy
             return true;
         }
 
-        if ($user->atuaComo('professor')) {
-            return $turma->professor_id === $user->id;
+        if ($user->hasRole('professor') && $turma->professor_id === $user->id) {
+            return true;
         }
 
         if ($user->hasRole('aluno')) {
@@ -24,22 +28,34 @@ class TurmaPolicy
         return false;
     }
 
-    /**
-     * Gerenciar módulos/conteúdo (material) da turma — é o professor
-     * responsável por ela, não uma permissão global.
-     */
-    public function manageConteudo(User $user, Turma $turma): bool
+    public function update(User $user, Turma $turma): bool
     {
-        return $user->hasRole('admin') || $turma->professor_id === $user->id;
+        return $this->ehResponsavel($user, $turma);
+    }
+
+    public function delete(User $user, Turma $turma): bool
+    {
+        return $this->ehResponsavel($user, $turma);
     }
 
     /**
-     * Gerenciar matrícula (matricular/desmatricular alunos) — capacidade
-     * global de quem tem a permissão manage-matriculas (manager), não
-     * depende de ser o professor responsável pela turma.
+     * Gerenciar módulos/conteúdo (material) da turma.
+     */
+    public function manageConteudo(User $user, Turma $turma): bool
+    {
+        return $this->ehResponsavel($user, $turma);
+    }
+
+    /**
+     * Matricular/desmatricular alunos — o professor da turma (ou o admin).
      */
     public function manageMatricula(User $user, Turma $turma): bool
     {
-        return $user->hasRole('admin') || $user->can('manage-matriculas');
+        return $this->ehResponsavel($user, $turma);
+    }
+
+    private function ehResponsavel(User $user, Turma $turma): bool
+    {
+        return $user->hasRole('admin') || $turma->professor_id === $user->id;
     }
 }

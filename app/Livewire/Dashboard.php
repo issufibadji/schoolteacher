@@ -17,7 +17,7 @@ class Dashboard extends Component
     {
         $user = Auth::user();
         $isAluno = $user->hasRole('aluno');
-        $isProfessor = ! $isAluno && $user->atuaComo('professor');
+        $isProfessor = ! $isAluno && $user->hasRole('professor');
 
         $data = [
             'recentNotifications' => $user->notifications()->latest()->limit(5)->get(),

@@ -4,12 +4,20 @@
         <x-button wire:click="create">+ Turma</x-button>
     </div>
 
-    <x-table :headers="['Nome', 'Curso', 'Professor', 'Alunos', 'Ativo', 'Ações']">
-        @foreach ($turmas as $turma)
+    @if (! $ehAdmin && $cursos->isEmpty())
+        <x-alert variant="info" class="mb-4">
+            Para criar uma turma, primeiro crie um curso em <a href="{{ route('academico.cursos.index') }}" class="font-medium underline">Cursos</a>.
+        </x-alert>
+    @endif
+
+    <x-table :headers="$ehAdmin ? ['Nome', 'Curso', 'Professor', 'Alunos', 'Ativo', 'Ações'] : ['Nome', 'Curso', 'Alunos', 'Ativo', 'Ações']">
+        @forelse ($turmas as $turma)
             <tr>
                 <td class="px-4 py-3">{{ $turma->nome }}</td>
                 <td class="px-4 py-3 text-text-secondary">{{ $turma->curso->nome }}</td>
-                <td class="px-4 py-3 text-text-secondary">{{ $turma->professor->name }}</td>
+                @if ($ehAdmin)
+                    <td class="px-4 py-3 text-text-secondary">{{ $turma->professor->name }}</td>
+                @endif
                 <td class="px-4 py-3 text-text-secondary">{{ $turma->alunos_count }}</td>
                 <td class="px-4 py-3">
                     <x-badge :variant="$turma->ativo ? 'success' : 'default'">{{ $turma->ativo ? 'Sim' : 'Não' }}</x-badge>
@@ -17,6 +25,7 @@
                 <td class="px-4 py-3 text-right whitespace-nowrap space-x-3">
                     <a href="{{ route('academico.turmas.matricula', $turma) }}" class="text-primary hover:underline text-sm">Matrícula</a>
                     <a href="{{ route('academico.turmas.conteudo', $turma) }}" class="text-primary hover:underline text-sm">Conteúdo</a>
+                    <a href="{{ route('academico.turmas.ao-vivo', $turma) }}" class="text-primary hover:underline text-sm">Ao vivo</a>
                     <button wire:click="edit({{ $turma->id }})" class="text-primary hover:underline text-sm">Editar</button>
                     <button
                         wire:click="delete({{ $turma->id }})"
@@ -27,7 +36,13 @@
                     </button>
                 </td>
             </tr>
-        @endforeach
+        @empty
+            <tr>
+                <td colspan="{{ $ehAdmin ? 6 : 5 }}" class="px-4 py-6 text-center text-sm text-text-secondary">
+                    {{ $ehAdmin ? 'Nenhuma turma cadastrada.' : 'Você ainda não tem turmas.' }}
+                </td>
+            </tr>
+        @endforelse
     </x-table>
 
     <x-modal name="turma-form" title="Turma">
@@ -43,16 +58,18 @@
                 @error('cursoId') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1 text-text-primary">Professor responsável</label>
-                <select wire:model="professorId" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
-                    <option value="">Selecione um professor</option>
-                    @foreach ($professores as $professor)
-                        <option value="{{ $professor->id }}">{{ $professor->name }}</option>
-                    @endforeach
-                </select>
-                @error('professorId') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
-            </div>
+            @if ($ehAdmin)
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-text-primary">Professor responsável</label>
+                    <select wire:model="professorId" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
+                        <option value="">Selecione um professor</option>
+                        @foreach ($professores as $professor)
+                            <option value="{{ $professor->id }}">{{ $professor->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('professorId') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                </div>
+            @endif
 
             <div>
                 <label class="block text-sm font-medium mb-1 text-text-primary">Nome</label>

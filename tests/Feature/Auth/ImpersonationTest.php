@@ -50,8 +50,8 @@ class ImpersonationTest extends TestCase
             ->assertSeeInOrder(['Você (Admin Chefe) está acessando', 'como', 'Prof Carla'])
             ->assertSee('Voltar para minha conta');
 
-        // Como professor, não entra em tela de admin.
-        $this->get(route('admin.users.index'))->assertForbidden();
+        // Como professor, não entra em tela só de admin.
+        $this->get(route('admin.config.index'))->assertForbidden();
 
         $this->post(route('impersonate.stop'))->assertRedirect(route('admin.users.index'));
 
@@ -72,15 +72,15 @@ class ImpersonationTest extends TestCase
 
     public function test_only_admin_can_access_as_another_user(): void
     {
-        $manager = $this->usuario('manager');
         $professor = $this->usuario('professor');
+        $aluno = $this->usuario('aluno');
 
-        Livewire::actingAs($manager)->test(UserManager::class)
+        Livewire::actingAs($professor)->test(UserManager::class)
             ->assertDontSee('Acessar como')
-            ->call('acessarComo', $professor->id)
+            ->call('acessarComo', $aluno->id)
             ->assertForbidden();
 
-        $this->assertTrue(auth()->user()->is($manager));
+        $this->assertTrue(auth()->user()->is($professor));
     }
 
     public function test_admin_cannot_access_as_another_admin_or_himself(): void

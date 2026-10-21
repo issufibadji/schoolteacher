@@ -38,10 +38,8 @@ class MenuSideBarSeeder extends Seeder
             ['label' => 'Turmas', 'group' => self::GRUPO_ACADEMICO, 'icon' => 'rectangle-group', 'permission' => 'manage-turmas', 'order' => 4],
         );
 
-        MenuSideBar::query()->updateOrCreate(
-            ['route_name' => 'academico.minhas-turmas.index'],
-            ['label' => 'Minhas Turmas', 'group' => self::GRUPO_ACADEMICO, 'icon' => 'rectangle-group', 'permission' => 'manage-own-turmas', 'order' => 5],
-        );
+        // "Minhas Turmas" saiu do menu: o professor usa "Turmas", que já mostra só as dele.
+        MenuSideBar::query()->where('route_name', 'academico.minhas-turmas.index')->delete();
 
         MenuSideBar::query()->updateOrCreate(
             ['route_name' => 'academico.meus-alunos.index'],

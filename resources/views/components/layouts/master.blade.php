@@ -129,8 +129,6 @@
                 </button>
 
                 <div class="ml-auto flex flex-wrap items-center justify-end gap-2 min-w-0">
-                    <livewire:troca-perfil />
-
                     <button
                         type="button"
                         @click="light = !light; document.documentElement.classList.toggle('light', light); localStorage.setItem('theme', light ? 'light' : 'dark')"

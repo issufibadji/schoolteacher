@@ -29,15 +29,15 @@ class RoleUserLinkerTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(RoleUserLinker::class)
-            ->set("selectedRole.{$target->id}", 'manager')
+            ->set("selectedRole.{$target->id}", 'admin')
             ->call('assign', $target->id);
 
-        $this->assertTrue($target->fresh()->hasRole('manager'));
+        $this->assertTrue($target->fresh()->hasRole('admin'));
 
         Livewire::actingAs($admin)
             ->test(RoleUserLinker::class)
-            ->call('remove', $target->id, 'manager');
+            ->call('remove', $target->id, 'admin');
 
-        $this->assertFalse($target->fresh()->hasRole('manager'));
+        $this->assertFalse($target->fresh()->hasRole('admin'));
     }
 }

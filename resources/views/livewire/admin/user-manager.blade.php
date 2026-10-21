@@ -1,8 +1,13 @@
 <div>
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 class="text-2xl font-semibold text-text-primary">Usuários</h1>
+        <div>
+            <h1 class="text-2xl font-semibold text-text-primary">Usuários</h1>
+            @unless ($ehAdmin)
+                <p class="text-sm text-text-secondary">Seus alunos: os das suas turmas e os que você cadastrou. Você edita só os que cadastrou.</p>
+            @endunless
+        </div>
         @can('create', \App\Models\User::class)
-            <x-button wire:click="create">+ Usuário</x-button>
+            <x-button wire:click="create">{{ $ehAdmin ? '+ Usuário' : '+ Aluno' }}</x-button>
         @endcan
     </div>
 
@@ -26,12 +31,14 @@
             <option value="unverified">Não verificado</option>
         </select>
 
-        <select wire:model.live="roleFilter" class="rounded-md bg-surface-card border-surface-border text-text-primary text-sm">
-            <option value="">Papel</option>
-            @foreach ($allRoles as $role)
-                <option value="{{ $role->name }}">{{ $role->name }}</option>
-            @endforeach
-        </select>
+        @if ($ehAdmin)
+            <select wire:model.live="roleFilter" class="rounded-md bg-surface-card border-surface-border text-text-primary text-sm">
+                <option value="">Papel</option>
+                @foreach ($allRoles as $role)
+                    <option value="{{ $role->name }}">{{ $role->name }}</option>
+                @endforeach
+            </select>
+        @endif
     </div>
 
     <x-table :headers="['Nome', 'E-mail', 'Papéis', 'Status', '2FA', 'Verificado', 'Ações']">
@@ -125,15 +132,24 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-1 text-text-primary">Papéis</label>
-                <div class="space-y-1">
-                    @foreach ($allRoles as $role)
-                        <label class="flex items-center gap-2 text-sm text-text-secondary">
-                            <input type="checkbox" wire:model="roles" value="{{ $role->name }}" class="rounded bg-surface border-surface-border">
-                            {{ $role->name }}
-                        </label>
-                    @endforeach
-                </div>
+                <label class="block text-sm font-medium mb-1 text-text-primary">{{ $ehAdmin ? 'Papéis' : 'Perfil' }}</label>
+                @if ($ehAdmin)
+                    <div class="space-y-1">
+                        @foreach ($allRoles as $role)
+                            <label class="flex items-center gap-2 text-sm text-text-secondary">
+                                <input type="checkbox" wire:model="roles" value="{{ $role->name }}" class="rounded bg-surface border-surface-border">
+                                {{ $role->name }}
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('roles.*') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                @else
+                    {{-- Professor só cadastra aluno; o servidor força esse perfil. --}}
+                    <div class="flex items-center gap-2">
+                        <x-badge variant="primary">Aluno</x-badge>
+                        <span class="text-xs text-text-secondary">Professores só cadastram alunos.</span>
+                    </div>
+                @endif
             </div>
 
             <div class="flex justify-end gap-3 pt-2">

@@ -30,15 +30,9 @@ class RolePermissionSeeder extends Seeder
             Permission::findOrCreate($permission);
         }
 
+        // Gestão de usuários e do sistema é só do admin. Papéis: admin, professor,
+        // aluno (os dois últimos vêm do AcademicoPermissionSeeder).
         $admin = Role::findOrCreate('admin');
         $admin->syncPermissions($permissions);
-
-        // Manager gerencia usuários de perfil abaixo dele (professor, aluno,
-        // operator) — nunca admin ou outro manager. O escopo por usuário-alvo
-        // é reforçado em UserPolicy + User::scopeGerenciavelPor(), não aqui.
-        $manager = Role::findOrCreate('manager');
-        $manager->syncPermissions(['view-users', 'create-users', 'edit-users', 'delete-users']);
-
-        Role::findOrCreate('operator');
     }
 }

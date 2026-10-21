@@ -27,18 +27,21 @@ class Sidebar extends Component
     }
 
     /**
-     * O admin tem bypass de permissão (Gate::before) e por isso enxergaria
-     * qualquer item permissionado, incluindo a seção Acadêmico — que é
-     * operacional (professor/aluno), não administrativa. Escondemos essa
-     * seção do admin na sidebar; o acesso direto por URL continua liberado
-     * pelo bypass, isso é só uma questão de poluição visual do menu.
+     * Itens que são do dia a dia de professor/aluno ("Meus Alunos", "Minha Turma",
+     * "Aulas ao Vivo"). O admin passa em qualquer permissão (Gate::before), mas
+     * esses itens não fazem sentido pra ele — ele usa Cursos, Turmas e Usuários,
+     * onde vê tudo. Esconder é só pra não poluir o menu; a URL continua liberada.
      */
+    private const PERMISSOES_SO_DE_PROFESSOR_OU_ALUNO = ['manage-own-turmas', 'view-own-turma'];
+
     private function visible(MenuSideBar $item): bool
     {
-        if ($item->group === 'Acadêmico' && Auth::user()?->hasRole('admin')) {
+        $user = Auth::user();
+
+        if ($user?->hasRole('admin') && in_array($item->permission, self::PERMISSOES_SO_DE_PROFESSOR_OU_ALUNO, true)) {
             return false;
         }
 
-        return ! $item->permission || Auth::user()?->can($item->permission);
+        return ! $item->permission || $user?->can($item->permission);
     }
 }

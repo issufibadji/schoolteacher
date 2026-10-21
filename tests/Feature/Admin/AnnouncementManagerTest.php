@@ -6,6 +6,7 @@ use App\Livewire\Admin\AnnouncementManager;
 use App\Models\AppConfig;
 use App\Models\User;
 use App\Notifications\SystemAnnouncementNotification;
+use Database\Seeders\AcademicoPermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -58,21 +59,24 @@ class AnnouncementManagerTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $manager = User::factory()->create();
-        $manager->assignRole('manager');
+        $this->seed(AcademicoPermissionSeeder::class);
 
-        $operator = User::factory()->create();
+        $professor = User::factory()->create();
+        $professor->assignRole('professor');
+
+        $aluno = User::factory()->create();
+        $aluno->assignRole('aluno');
 
         Livewire::actingAs($admin)
             ->test(AnnouncementManager::class)
-            ->set('title', 'Aviso pros managers')
+            ->set('title', 'Aviso pros professores')
             ->set('message', 'Reunião às 10h.')
-            ->set('target', 'role:manager')
+            ->set('target', 'role:professor')
             ->set('channels', ['database'])
             ->call('send');
 
-        Notification::assertSentTo($manager, SystemAnnouncementNotification::class);
-        Notification::assertNotSentTo($operator, SystemAnnouncementNotification::class);
+        Notification::assertSentTo($professor, SystemAnnouncementNotification::class);
+        Notification::assertNotSentTo($aluno, SystemAnnouncementNotification::class);
     }
 
     public function test_webhook_channel_posts_to_the_configured_url(): void

@@ -5,7 +5,6 @@ namespace App\Livewire\Admin;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\UserAccountCreated;
-use App\Policies\UserPolicy;
 use App\Services\ImpersonationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -65,8 +64,21 @@ class UserManager extends Component
         Gate::authorize('create', User::class);
 
         $this->reset(['userId', 'name', 'email', 'password', 'roles']);
+
+        if (! $this->ehAdmin()) {
+            $this->roles = ['aluno'];
+        }
+
         $this->resetErrorBag();
         $this->dispatch('open-modal', name: 'user-form');
+    }
+
+    /**
+     * Admin escolhe qualquer papel; professor só cadastra/edita aluno.
+     */
+    private function ehAdmin(): bool
+    {
+        return Auth::user()->hasRole('admin');
     }
 
     public function edit(int $id): void
@@ -99,14 +111,15 @@ class UserManager extends Component
             'password' => $this->userId ? 'nullable|string|min:8' : 'required|string|min:8',
         ]);
 
-        // Um manager nunca pode atribuir um papel fora do que ele mesmo
-        // gerencia — senão ele se auto-promove (ou promove alguém) a
-        // admin/manager. Validação de servidor, não só esconder no formulário.
-        if (! Auth::user()->hasRole('admin')) {
+        // Professor só cadastra aluno: o papel é forçado no servidor, não importa o
+        // que veio do formulário. Admin escolhe entre os papéis que existem.
+        if ($this->ehAdmin()) {
             $this->validate([
                 'roles' => ['array'],
-                'roles.*' => Rule::in(UserPolicy::PAPEIS_GERENCIAVEIS_POR_MANAGER),
+                'roles.*' => Rule::exists('roles', 'name'),
             ]);
+        } else {
+            $this->roles = ['aluno'];
         }
 
         $user->name = $this->name;
@@ -118,6 +131,8 @@ class UserManager extends Component
 
         if ($isNew) {
             $user->email_verified_at = now();
+            // Quem cadastrou: é assim que o professor continua vendo o aluno antes de matricular.
+            $user->criado_por = Auth::id();
         }
 
         $user->save();
@@ -189,11 +204,12 @@ class UserManager extends Component
 
         $allRoles = $ator->hasRole('admin')
             ? Role::orderBy('name')->get()
-            : Role::whereIn('name', UserPolicy::PAPEIS_GERENCIAVEIS_POR_MANAGER)->orderBy('name')->get();
+            : Role::where('name', 'aluno')->get();
 
         return view('livewire.admin.user-manager', [
             'users' => $users,
             'allRoles' => $allRoles,
+            'ehAdmin' => $ator->hasRole('admin'),
             'impersonation' => app(ImpersonationService::class),
         ]);
     }

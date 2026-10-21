@@ -4,10 +4,17 @@
         <x-button wire:click="create">+ Curso</x-button>
     </div>
 
-    <x-table :headers="['Nome', 'Tipo', 'Turmas', 'Ativo', 'Ações']">
-        @foreach ($cursos as $curso)
+    <x-table :headers="['Nome', 'Responsável', 'Tipo', 'Turmas', 'Ativo', 'Ações']">
+        @forelse ($cursos as $curso)
             <tr>
                 <td class="px-4 py-3">{{ $curso->nome }}</td>
+                <td class="px-4 py-3 text-text-secondary">
+                    @if ($curso->professor_id === auth()->id())
+                        <x-badge variant="primary">Atribuído a mim</x-badge>
+                    @else
+                        {{ $curso->professor?->name ?? 'Administração' }}
+                    @endif
+                </td>
                 <td class="px-4 py-3 text-text-secondary">{{ $curso->tipo === 'longo_prazo' ? 'Longo prazo' : 'Curto prazo' }}</td>
                 <td class="px-4 py-3 text-text-secondary">{{ $curso->turmas_count }}</td>
                 <td class="px-4 py-3">
@@ -24,7 +31,13 @@
                     </button>
                 </td>
             </tr>
-        @endforeach
+        @empty
+            <tr>
+                <td colspan="6" class="px-4 py-6 text-center text-sm text-text-secondary">
+                    {{ $ehAdmin ? 'Nenhum curso cadastrado.' : 'Você ainda não tem cursos. Clique em "+ Curso" para criar o primeiro.' }}
+                </td>
+            </tr>
+        @endforelse
     </x-table>
 
     <x-modal name="curso-form" title="Curso">
@@ -34,6 +47,29 @@
                 <input type="text" wire:model="nome" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
                 @error('nome') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
             </div>
+
+            @if ($ehAdmin)
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-text-primary">Professor responsável</label>
+                    <select wire:model="professorId" class="w-full rounded-md bg-surface border-surface-border text-text-primary">
+                        <option value="">Administração (sem professor)</option>
+                        @foreach ($professores as $professor)
+                            <option value="{{ $professor->id }}">{{ $professor->name }}</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-text-secondary">Só o professor responsável vê e cria turmas neste curso.</p>
+                    @error('professorId') <p class="mt-1 text-sm text-danger">{{ $message }}</p> @enderror
+                </div>
+            @else
+                {{-- Professor: o curso é sempre dele (o servidor grava o próprio professor como dono). --}}
+                <div>
+                    <label for="curso-responsavel" class="block text-sm font-medium mb-1 text-text-primary">Professor responsável</label>
+                    <select id="curso-responsavel" disabled class="w-full rounded-md bg-surface border-surface-border text-text-primary opacity-80 cursor-not-allowed">
+                        <option selected>Atribuído a mim — {{ auth()->user()->name }}</option>
+                    </select>
+                    <p class="mt-1 text-xs text-text-secondary">Os cursos que você cria ficam com você: só você vê e cria turmas neles.</p>
+                </div>
+            @endif
 
             <div>
                 <label class="block text-sm font-medium mb-1 text-text-primary">Tipo</label>

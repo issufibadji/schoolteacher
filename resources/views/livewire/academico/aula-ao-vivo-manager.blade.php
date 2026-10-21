@@ -1,7 +1,7 @@
 <div>
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-            <a href="{{ route('academico.minhas-turmas.index') }}" class="text-sm text-primary hover:underline">&larr; Minhas Turmas</a>
+            <a href="{{ route('academico.turmas.index') }}" class="text-sm text-primary hover:underline">&larr; Turmas</a>
             <h1 class="text-2xl font-semibold text-text-primary mt-1">Aulas ao vivo — {{ $turma->nome }}</h1>
             <p class="text-sm text-text-secondary">A sala abre dentro do sistema. Ao iniciar, os alunos da turma são avisados.</p>
         </div>
